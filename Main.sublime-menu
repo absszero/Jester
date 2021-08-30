@@ -1,0 +1,60 @@
+[
+    {
+        "id": "tools",
+        "children": [
+            {
+                "caption": "Jester...",
+                "mnemonic": "t",
+                "command": "show_overlay",
+                "args": {
+                    "overlay": "command_palette",
+                    "text": "Jester: "
+                }
+            }
+        ]
+    },
+    {
+        "caption": "Preferences",
+        "mnemonic": "n",
+        "id": "preferences",
+        "children":
+        [
+            {
+                "caption": "Package Settings",
+                "mnemonic": "P",
+                "id": "package-settings",
+                "children":
+                [
+                    {
+                        "caption": "Jester",
+                        "children":
+                        [
+                            {
+                                "caption": "Settings – Default",
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/sublime-jest/Preferences.sublime-settings"
+                                }
+                            },
+                            {
+                                "caption": "Settings – User",
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/User/Preferences.sublime-settings"
+                                }
+                            },
+                            { "caption": "-" },
+                            {
+                                "caption": "Key Bindings - User",
+                                "command": "edit_settings",
+                                "args": {
+                                    "file": "${packages}/User/Default (${platform}).sublime-keymap"
+                                  }
+                              }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

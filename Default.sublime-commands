@@ -1,0 +1,7 @@
+[
+    { "caption": "Jester: Test File", "command": "jester_test_file" },
+    { "caption": "Jester: Test Last", "command": "jester_test_last" },
+    { "caption": "Jester: Test Nearest", "command": "jester_test_nearest" },
+    { "caption": "Preferences: Jester Settings – Default", "command": "open_file", "args": { "file": "${packages}/sublime-jest/Preferences.sublime-settings" } },
+    { "caption": "Preferences: Jester Settings – User", "command": "open_file", "args": { "file": "${packages}/User/Preferences.sublime-settings" } }
+]
