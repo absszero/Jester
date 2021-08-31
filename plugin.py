@@ -410,14 +410,9 @@ def exec_file_regex():
 
 
 def is_file_executable(file):
+    if file is None:
+        return False
     return os.path.isfile(file) and os.access(file, os.X_OK)
-
-
-def is_valid_php_version_file_version(version):
-    return bool(re.match(
-        '^(?:master|[1-9](?:\\.[0-9]+)?(?:snapshot|\\.[0-9]+(?:snapshot)?)|[1-9]\\.x|[1-9]\\.[0-9]+\\.x)$',
-        version
-    ))
 
 
 def build_cmd_options(options, cmd):
@@ -461,61 +456,19 @@ def filter_path(path):
     return os.path.expandvars(os.path.expanduser(path))
 
 
-def _get_phpunit_executable(working_dir, include_composer_vendor_dir=True):
-    debug_message('find phpunit executable composer=%s', include_composer_vendor_dir)
-    if include_composer_vendor_dir:
-        if platform() == 'windows':
-            composer_phpunit_executable = os.path.join(working_dir, os.path.join('vendor', 'bin', 'phpunit.bat'))
-            debug_message('  found \'%s\' (windows)', composer_phpunit_executable)
-        else:
-            composer_phpunit_executable = os.path.join(working_dir, os.path.join('vendor', 'bin', 'phpunit'))
-            debug_message('  found \'%s\' (unix)', composer_phpunit_executable)
+def _get_jest_executable(working_dir):
+    locations = [
+        os.path.join(working_dir, os.path.join('node_modules', '.bin', 'jest.cmd')),
+        os.path.join(working_dir, os.path.join('node_modules', '.bin', 'jest')),
+        shutil.which('jest')
+    ]
+    for location in locations:
+        debug_message('  found jest_location:\'%s\'', location)
+        if is_file_executable(location):
+            debug_message('  found jest_executable:\'%s\'', location)
+            return location
 
-        if is_file_executable(composer_phpunit_executable):
-            return composer_phpunit_executable
-
-        debug_message('  Warning: \'%s\' is not executable!', composer_phpunit_executable)
-
-    executable = shutil.which('phpunit')
-    debug_message('  found \'%s\' (global)', executable)
-    if executable:
-        return executable
-    else:
-        raise ValueError('phpunit not found')
-
-
-def _get_jest_executable(working_dir, php_versions_path, php_executable=None):
-    php_version_file = os.path.join(working_dir, '.php-version')
-    if os.path.isfile(php_version_file):
-        with open(php_version_file, 'r') as f:
-            php_version_number = f.read().strip()
-
-        if not is_valid_php_version_file_version(php_version_number):
-            raise ValueError("'%s' file contents is not a valid version number" % php_version_file)
-
-        if not php_versions_path:
-            raise ValueError("'phpunit.php_versions_path' is not set")
-
-        php_versions_path = filter_path(php_versions_path)
-        if not os.path.isdir(php_versions_path):
-            raise ValueError("'phpunit.php_versions_path' '%s' does not exist or is not a valid directory" % php_versions_path)  # noqa: E501
-
-        if platform() == 'windows':
-            php_executable = os.path.join(php_versions_path, php_version_number, 'php.exe')
-        else:
-            php_executable = os.path.join(php_versions_path, php_version_number, 'bin', 'php')
-
-        if not is_file_executable(php_executable):
-            raise ValueError("php executable '%s' is not an executable file" % php_executable)
-
-        return php_executable
-
-    if php_executable:
-        php_executable = filter_path(php_executable)
-        if not is_file_executable(php_executable):
-            raise ValueError("'phpunit.php_executable' '%s' is not an executable file" % php_executable)
-
-        return php_executable
+    raise ValueError('jest not executable')
 
 
 class Jester():
@@ -548,12 +501,7 @@ class Jester():
 
             debug_message('working dir \'%s\'', working_dir)
 
-            php_executable = self.get_jest_executable(working_dir)
-            if php_executable:
-                env['PATH'] = os.path.dirname(php_executable) + os.pathsep + os.environ['PATH']
-                debug_message('php executable \'%s\'', php_executable)
-
-            phpunit_executable = self.get_phpunit_executable(working_dir)
+            phpunit_executable = self.get_jest_executable(working_dir)
             cmd.append(phpunit_executable)
             debug_message('phpunit executable \'%s\'', phpunit_executable)
 
@@ -756,22 +704,13 @@ class Jester():
         return options
 
     def get_jest_executable(self, working_dir):
-        versions_path = self.view.settings().get('phpunit.php_versions_path')
-        executable = self.view.settings().get('phpunit.php_executable')
-
-        return _get_jest_executable(working_dir, versions_path, executable)
-
-    def get_phpunit_executable(self, working_dir):
-        composer = self.view.settings().get('phpunit.composer')
-        debug_message('phpunit.composer = %s', composer)
-
-        executable = self.view.settings().get('phpunit.executable')
+        executable = self.view.settings().get('jester.executable')
         if executable:
             executable = filter_path(executable)
-            debug_message('phpunit.executable = %s', executable)
+            debug_message('jester.executable = %s', executable)
             return executable
 
-        return _get_phpunit_executable(working_dir, composer)
+        return _get_jest_executable(working_dir)
 
     def get_auto_generated_color_scheme(self):
         """Try to patch color scheme with default test result colors."""
