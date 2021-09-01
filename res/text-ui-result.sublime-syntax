@@ -1,0 +1,90 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/3/syntax.html
+# See https://github.com/facebook/jest/blob/master/packages/jest-reporters/src/SummaryReporter.ts
+name: Jest Text UI Result
+scope: text.phpunit-result
+hidden: true
+contexts:
+  main:
+
+    - match: ^--$
+      scope: comment.text.phpunit-result
+
+    - include: scope:source.diff
+
+    - match: ^(?=(\.\.|FF|\.(E|F|I|R|S|W)|(E|F|I|R|S|W)\.)|(\.|E|F|I|R|S|W)$)
+      push:
+        - match: ^(?=Time|OK|FAILURES|ERRORS|WARNINGS)
+          pop: true
+        - match: \.
+          scope: test.progress.success.phpunit-result
+        - match: E
+          scope: region.redish phpunitkit test.progress.error.phpunit-result
+        - match: F
+          scope: region.redish phpunitkit test.progress.failure.phpunit-result
+        - match: I
+          scope: region.orangish phpunitkit test.progress.incomplete.phpunit-result
+        - match: R
+          scope: region.orangish phpunitkit test.progress.risky.phpunit-result
+        - match: S
+          scope: region.orangish phpunitkit test.progress.skipped.phpunit-result
+        - match: W
+          scope: region.orangish phpunitkit test.progress.warning.phpunit-result
+
+    # Pretty Printer support
+    - match: ^\s*==>.{43}
+      push:
+        - match: $
+          pop: true
+
+        - match: ✓
+          scope: markup.inserted
+
+        - match: ✖
+          scope: markup.deleted
+
+        - match: ⚈
+          scope: markup.deleted
+
+        - match: ➦
+          scope: markup.changed
+
+        - match: ℹ
+          scope: markup.changed
+
+        - match: \bR\b
+          scope: markup.changed
+
+    - match: '^(?:\e\[[0-9;]+m)?No tests executed\!(?:\e\[[0-9;]+m)?$'
+      scope: region.orangish phpunitkit test.footer.none-executed.phpunit-result
+
+    - match: '^(?:\e\[[0-9;]+m)?OK \(\d+ test(?:s)?, \d+ assertion(?:s)?\)(?:\e\[[0-9;]+m)?$'
+      scope: region.greenish phpunitkit test.footer.ok.phpunit-result
+
+    - match: '^(?:\e\[[0-9;]+m)?OK, but incomplete, skipped, or risky tests\!(?:\e\[[0-9;]+m)?$'
+      scope: region.orangish phpunitkit test.footer.ok-but-incomplete-skipped-or-risky.phpunit-result
+
+    - match: '^(?:\e\[[0-9;]+m)?Tests\: \d+, Assertions\: \d+(?:, (?:Incomplete|Skipped|Risky)\: \d+)+\.(?:\e\[[0-9;]+m)?$'
+      scope: region.orangish phpunitkit test.footer.ok-but-incomplete-skipped-or-risky.phpunit-result
+
+    - match: '^(?:\e\[[0-9;]+m)?WARNINGS\!(?:\e\[[0-9;]+m\s*)?$'
+      scope: region.orangish phpunitkit test.footer.warn.phpunit-result
+      push:
+        - match: '^(?:\e\[[0-9;]+m)?Tests\: \d+, Assertions\: \d+(?:, (?:Errors|Failures|Warnings|Skipped|Incomplete|Risky)\: \d+)+\.(?:\e\[[0-9;]+m)?$'
+          scope: region.orangish phpunitkit test.footer.warn.phpunit-result
+          pop: true
+
+    - match: '^(?:\e\[[0-9;]+m)?FAILURES\!(?:\e\[[0-9;]+m\s*)?$'
+      scope: region.redish phpunitkit test.footer.fail.phpunit-result
+      push:
+        - match: '^(?:\e\[[0-9;]+m)?Tests\: \d+, Assertions\: \d+(?:, (?:Errors|Failures|Warnings|Skipped|Incomplete|Risky)\: \d+)+\.(?:\e\[[0-9;]+m)?$'
+          scope: region.redish phpunitkit test.footer.fail.phpunit-result
+          pop: true
+
+    - match: '^(?:\e\[[0-9;]+m)?ERRORS\!(?:\e\[[0-9;]+m\s*)?$'
+      scope: region.redish phpunitkit test.footer.error.phpunit-result
+      push:
+        - match: '^(?:\e\[[0-9;]+m)?Tests\: \d+, Assertions\: \d+(?:, (?:Errors|Failures|Warnings|Skipped|Incomplete|Risky)\: \d+)+\.(?:\e\[[0-9;]+m)?$'
+          scope: region.redish phpunitkit test.footer.error.phpunit-result
+          pop: true

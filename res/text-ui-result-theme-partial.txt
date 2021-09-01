@@ -1,0 +1,63 @@
+
+        <!-- Jester -->
+
+        <dict>
+            <key>scope</key>
+            <string>test.footer.ok</string>
+            <key>settings</key>
+            <dict>
+                <key>background</key>
+                <string>#a6e22e</string>
+                <key>foreground</key>
+                <string>#272822</string>
+            </dict>
+        </dict>
+        <dict>
+            <key>scope</key>
+            <string>test.footer.warn, test.footer.none-executed, test.footer.ok-but-incomplete-skipped-or-risky</string>
+            <key>settings</key>
+            <dict>
+                <key>background</key>
+                <string>#fd971f</string>
+                <key>foreground</key>
+                <string>#272822</string>
+            </dict>
+        </dict>
+        <dict>
+            <key>scope</key>
+            <string>test.footer.error, test.footer.fail</string>
+            <key>settings</key>
+            <dict>
+                <key>background</key>
+                <string>#f92672</string>
+                <key>foreground</key>
+                <string>#f8f8f2</string>
+            </dict>
+        </dict>
+
+        <dict>
+            <key>scope</key>
+            <string>test.progress.error, test.progress.failure</string>
+            <key>settings</key>
+            <dict>
+                <key>background</key>
+                <string>#f92672</string>
+                <key>foreground</key>
+                <string>#f8f8f2</string>
+            </dict>
+        </dict>
+        <dict>
+            <key>scope</key>
+            <string>test.progress.warning, test.progress.skipped, test.progress.incomplete, test.progress.risky</string>
+            <key>settings</key>
+            <dict>
+                <key>background</key>
+                <string>#fd971f</string>
+                <key>foreground</key>
+                <string>#272822</string>
+                <key>fontStyle</key>
+                <string>bold</string>
+            </dict>
+        </dict>
+
+        <!-- /Jester -->

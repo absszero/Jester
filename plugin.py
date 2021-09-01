@@ -5,13 +5,13 @@ import shutil
 from sublime import ENCODED_POSITION
 from sublime import active_window
 from sublime import cache_path
-from sublime import load_resource
 from sublime import platform
 from sublime import status_message
 import sublime_plugin
+from Jester.reporter import get_color_scheme
 
 
-_DEBUG = bool(os.getenv('SUBLIME_PHPUNIT_DEBUG'))
+_DEBUG = bool(os.getenv('SUBLIME_JESTER_DEBUG'))
 
 if _DEBUG:
     def debug_message(msg, *args):
@@ -35,9 +35,9 @@ def message(msg, *args):
 
 def is_debug(view=None):
     if view:
-        phpunit_debug = view.settings().get('phpunit.debug')
-        return phpunit_debug or (
-            phpunit_debug is not False and view.settings().get('debug')
+        Jester_debug = view.settings().get('Jester.debug')
+        return Jester_debug or (
+            Jester_debug is not False and view.settings().get('debug')
         )
     else:
         return _DEBUG
@@ -115,8 +115,8 @@ def find_jest_configuration_file(file_name, folders):
     return None
 
 
-def find_working_directory(file_name):
-    configuration_file = find_jest_configuration_file(file_name, self.window.folders())
+def find_working_directory(file_name, folders):
+    configuration_file = find_jest_configuration_file(file_name, folders)
     if configuration_file:
         return os.path.dirname(configuration_file)
 
@@ -126,7 +126,7 @@ def is_valid_php_identifier(string):
 
 
 def has_test_case(view):
-    """Return True if the view contains a valid PHPUnit test case."""
+    """Return True if the view contains a valid Jester test case."""
     for php_class in find_php_classes(view):
         if php_class[-4:] == 'Test':
             return True
@@ -331,10 +331,13 @@ def find_switchable(view, on_select=None):
         else:
             symbol = class_name + 'Test'
 
-        symbol_locations = window.lookup_symbol_in_index(symbol)
+        symbol_locations = window.symbol_locations(symbol)
+        print(symbol_locations)
         locations += symbol_locations
 
     debug_message('class has %s location %s', len(locations), locations)
+
+    return
 
     def unique_locations(locations):
         locs = []
@@ -369,6 +372,7 @@ def find_switchable(view, on_select=None):
     debug_message('locations(%s)=%s', len(locations), locations)
 
     if is_exact and len(locations) == 1:
+        return
         return _on_select(0)
 
     window.show_quick_panel(['{}:{}'.format(l[1], l[2][0]) for l in locations], _on_select)
@@ -492,7 +496,7 @@ class Jester():
 
         try:
             if not working_dir:
-                working_dir = find_working_directory(self.view.file_name())
+                working_dir = find_working_directory(self.view.file_name(), self.window.folders())
                 if not working_dir:
                     raise ValueError('working directory not found')
 
@@ -501,9 +505,8 @@ class Jester():
 
             debug_message('working dir \'%s\'', working_dir)
 
-            phpunit_executable = self.get_jest_executable(working_dir)
-            cmd.append(phpunit_executable)
-            debug_message('phpunit executable \'%s\'', phpunit_executable)
+            jest_executable = self.get_jest_executable(working_dir)
+            cmd.append(jest_executable)
 
             options = self.filter_options(options)
             debug_message('options %s', options)
@@ -529,7 +532,7 @@ class Jester():
         debug_message('env %s', env)
         debug_message('cmd %s', cmd)
 
-        if self.view.settings().get('phpunit.save_all_on_run'):
+        if self.view.settings().get('Jester.save_all_on_run'):
             # Write out every buffer in active
             # window that has changes and is
             # a real file on disk.
@@ -537,13 +540,13 @@ class Jester():
                 if view.is_dirty() and view.file_name():
                     view.run_command('save')
 
-        set_window_setting('phpunit._test_last', {
+        set_window_setting('Jester._test_last', {
             'working_dir': working_dir,
             'file': file,
             'options': options
         }, window=self.window)
 
-        if self.view.settings().get('phpunit.strategy') == 'iterm':
+        if self.view.settings().get('Jester.strategy') == 'iterm':
             osx_iterm_script = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)), 'bin', 'osx_iterm')
 
@@ -581,17 +584,18 @@ class Jester():
             panel_settings = panel.settings()
             panel_settings.set('rulers', [])
 
-            if self.view.settings().has('phpunit.text_ui_result_font_size'):
+            if self.view.settings().has('Jester.text_ui_result_font_size'):
                 panel_settings.set(
                     'font_size',
-                    self.view.settings().get('phpunit.text_ui_result_font_size')
+                    self.view.settings().get('Jester.text_ui_result_font_size')
                 )
 
-            color_scheme = self.get_auto_generated_color_scheme()
+            color_scheme = get_color_scheme(self.view.settings().get('color_scheme'))
             panel_settings.set('color_scheme', color_scheme)
 
     def run_last(self):
-        last_test_args = get_window_setting('phpunit._test_last', window=self.window)
+        last_test_args = get_window_setting('Jester._test_last', window=self.window)
+        print(last_test_args)
         if not last_test_args:
             return status_message('Jester: no tests were run so far')
 
@@ -602,20 +606,22 @@ class Jester():
             options = {}
 
         file = self.view.file_name()
-        if not file:
+        if not self.is_test_file(file):
             return status_message('Jester: not a test file')
 
-        find_switchable(
-            self.view,
-            on_select=lambda switchable: self.run(
-                file=switchable.file,
-                options=options
+        self.run(file=file, options=options)
+
+    def is_test_file(self, file):
+        return bool(file and (
+                file.endswith('.js') or
+                file.endswith('.ts') or
+                file.endswith('.jsx')
             )
         )
 
     def run_nearest(self, options):
         file = self.view.file_name()
-        if not file:
+        if not self.is_test_file(file):
             return status_message('Jester: not a test file')
 
         if has_test_case(self.view):
@@ -641,13 +647,13 @@ class Jester():
         self.window.run_command('exec', {'kill': True})
 
     def open_coverage_report(self):
-        working_dir = find_working_directory(self.view.file_name())
+        working_dir = find_working_directory(self.view.file_name(), self.window.folders())
         if not working_dir:
-            return status_message('Jester: could not find a PHPUnit working directory')
+            return status_message('Jester: could not find a Jester working directory')
 
         coverage_html_index_html_file = os.path.join(working_dir, 'build/coverage/index.html')
         if not os.path.exists(coverage_html_index_html_file):
-            return status_message('Jester: could not find PHPUnit HTML code coverage %s' % coverage_html_index_html_file)  # noqa: E501
+            return status_message('Jester: could not find Jester HTML code coverage %s' % coverage_html_index_html_file)  # noqa: E501
 
         import webbrowser
         webbrowser.open_new_tab('file://' + coverage_html_index_html_file)
@@ -660,7 +666,7 @@ class Jester():
         find_switchable(self.view, on_select=_on_switchable)
 
     def visit(self):
-        test_last = get_window_setting('phpunit._test_last', window=self.window)
+        test_last = get_window_setting('Jester._test_last', window=self.window)
         if test_last:
             if 'file' in test_last and 'working_dir' in test_last:
                 if test_last['file']:
@@ -671,7 +677,7 @@ class Jester():
         return status_message('Jester: no tests were run so far')
 
     def toggle_option(self, option, value=None):
-        options = get_window_setting('phpunit.options', default={}, window=self.window)
+        options = get_window_setting('Jester.options', default={}, window=self.window)
 
         if value is None:
             options[option] = not bool(options[option]) if option in options else True
@@ -681,20 +687,20 @@ class Jester():
             else:
                 options[option] = value
 
-        set_window_setting('phpunit.options', options, window=self.window)
+        set_window_setting('Jester.options', options, window=self.window)
 
     def filter_options(self, options):
         if options is None:
             options = {}
 
-        window_options = get_window_setting('phpunit.options', default={}, window=self.window)
+        window_options = get_window_setting('jester.options', default={}, window=self.window)
         debug_message('window options %s', window_options)
         if window_options:
             for k, v in window_options.items():
                 if k not in options:
                     options[k] = v
 
-        view_options = self.view.settings().get('phpunit.options')
+        view_options = self.view.settings().get('jester.options')
         debug_message('view options %s', view_options)
         if view_options:
             for k, v in view_options.items():
@@ -712,116 +718,70 @@ class Jester():
 
         return _get_jest_executable(working_dir)
 
-    def get_auto_generated_color_scheme(self):
-        """Try to patch color scheme with default test result colors."""
-        color_scheme = self.view.settings().get('color_scheme')
-        if color_scheme.endswith('.sublime-color-scheme'):
-            return color_scheme
-
-        try:
-            color_scheme_resource = load_resource(color_scheme)
-            if 'phpunitkit' in color_scheme_resource or 'PHPUnitKit' in color_scheme_resource:
-                return color_scheme
-
-            if 'region.greenish' in color_scheme_resource:
-                return color_scheme
-
-            cs_head, cs_tail = os.path.split(color_scheme)
-            cs_package = os.path.split(cs_head)[1]
-            cs_name = os.path.splitext(cs_tail)[0]
-
-            file_name = cs_package + '__' + cs_name + '.hidden-tmTheme'
-            abs_file = os.path.join(cache_path(), __name__.split('.')[0], 'color-schemes', file_name)
-            rel_file = 'Cache/{}/color-schemes/{}'.format(__name__.split('.')[0], file_name)
-
-            debug_message('auto generating color scheme = %s', rel_file)
-
-            if not os.path.exists(os.path.dirname(abs_file)):
-                os.makedirs(os.path.dirname(abs_file))
-
-            color_scheme_resource_partial = load_resource(
-                'Packages/{}/res/text-ui-result-theme-partial.txt'.format(__name__.split('.')[0]))
-
-            with open(abs_file, 'w', encoding='utf8') as f:
-                f.write(re.sub(
-                    '</array>\\s*'
-                    '((<!--\\s*)?<key>.*</key>\\s*<string>[^<]*</string>\\s*(-->\\s*)?)*'
-                    '</dict>\\s*</plist>\\s*'
-                    '$',
-
-                    color_scheme_resource_partial + '\\n</array></dict></plist>',
-                    color_scheme_resource
-                ))
-
-            return rel_file
-        except Exception as e:
-            print('Jester: an error occurred trying to patch color'
-                  ' scheme with PHPUnit test results colors: {}'.format(str(e)))
-
-            return color_scheme
 
 
-class PhpunitTestSuiteCommand(sublime_plugin.WindowCommand):
+
+class JesterTestSuiteCommand(sublime_plugin.WindowCommand):
 
     def run(self, **kwargs):
-        PHPUnit(self.window).run(options=kwargs)
+        Jester(self.window).run(options=kwargs)
 
 
 class JesterTestFileCommand(sublime_plugin.WindowCommand):
 
     def run(self, **kwargs):
-        PHPUnit(self.window).run_file(options=kwargs)
+        Jester(self.window).run_file(options=kwargs)
 
 
-class PhpunitTestLastCommand(sublime_plugin.WindowCommand):
+class JesterTestLastCommand(sublime_plugin.WindowCommand):
 
     def run(self):
-        PHPUnit(self.window).run_last()
+        Jester(self.window).run_last()
 
 
-class PhpunitTestNearestCommand(sublime_plugin.WindowCommand):
+class JesterTestNearestCommand(sublime_plugin.WindowCommand):
 
     def run(self, **kwargs):
-        PHPUnit(self.window).run_nearest(options=kwargs)
+        Jester(self.window).run_nearest(options=kwargs)
 
 
-class PhpunitTestResultsCommand(sublime_plugin.WindowCommand):
-
-    def run(self):
-        PHPUnit(self.window).show_results()
-
-
-class PhpunitTestCancelCommand(sublime_plugin.WindowCommand):
+class JesterTestResultsCommand(sublime_plugin.WindowCommand):
 
     def run(self):
-        PHPUnit(self.window).cancel()
+        Jester(self.window).show_results()
 
 
-class PhpunitTestVisitCommand(sublime_plugin.WindowCommand):
-
-    def run(self):
-        PHPUnit(self.window).visit()
-
-
-class PhpunitTestSwitchCommand(sublime_plugin.WindowCommand):
+class JesterTestCancelCommand(sublime_plugin.WindowCommand):
 
     def run(self):
-        PHPUnit(self.window).switch()
+        Jester(self.window).cancel()
 
 
-class PhpunitToggleOptionCommand(sublime_plugin.WindowCommand):
+class JesterTestVisitCommand(sublime_plugin.WindowCommand):
+
+    def run(self):
+        Jester(self.window).visit()
+
+
+class JesterTestSwitchCommand(sublime_plugin.WindowCommand):
+
+    def run(self):
+        Jester(self.window).switch()
+
+
+class JesterToggleOptionCommand(sublime_plugin.WindowCommand):
 
     def run(self, option, value=None):
-        PHPUnit(self.window).toggle_option(option, value)
+        Jester(self.window).toggle_option(option, value)
 
 
-class PhpunitTestCoverageCommand(sublime_plugin.WindowCommand):
+class JesterTestCoverageCommand(sublime_plugin.WindowCommand):
 
     def run(self):
-        PHPUnit(self.window).open_coverage_report()
+        Jester(self.window).open_coverage_report()
 
 
-class PhpunitEvents(sublime_plugin.EventListener):
+class JesterEvents(sublime_plugin.EventListener):
 
     def on_post_save(self, view):
         file_name = view.file_name()
@@ -831,7 +791,7 @@ class PhpunitEvents(sublime_plugin.EventListener):
         if not file_name.endswith('.php'):
             return
 
-        on_post_save_events = view.settings().get('phpunit.on_post_save')
+        on_post_save_events = view.settings().get('Jester.on_post_save')
 
         if 'run_test_file' in on_post_save_events:
-            PHPUnit(view.window()).run_file()
+            Jester(view.window()).run_file()
