@@ -1,13 +1,14 @@
 import re
 import os
 import shutil
+import sublime_plugin
 
 from sublime import ENCODED_POSITION
 from sublime import active_window
 from sublime import cache_path
 from sublime import platform
 from sublime import status_message
-import sublime_plugin
+from re import compile
 from Jester.reporter import get_color_scheme
 
 
@@ -138,9 +139,10 @@ def find_php_classes(view, with_namespace=False):
     classes = []
 
     namespace = None
-    for namespace_region in view.find_by_selector('source.php entity.name.namespace'):
+    # for namespace_region in view.find_by_selector('entity.name.function'):
+    for namespace_region in view.find_by_selector('meta.function-call'):
         namespace = view.substr(namespace_region)
-        break  # TODO handle files with multiple namespaces
+        print(namespace)
 
     for class_as_region in view.find_by_selector('source.php entity.name.class - meta.use'):
         class_as_string = view.substr(class_as_region)
@@ -163,7 +165,7 @@ def find_php_classes(view, with_namespace=False):
     return classes
 
 
-def find_selected_test_methods(view):
+def find_test_name_in_selection(view):
     """
     Return a list of selected test method names.
 
@@ -171,46 +173,30 @@ def find_selected_test_methods(view):
 
     Selection can be anywhere inside one or more test methods.
     """
-    method_names = []
 
-    function_regions = view.find_by_selector('entity.name.function')
-    function_areas = []
-    # Only include areas that contain function declarations.
-    for function_area in view.find_by_selector('meta.function'):
-        for function_region in function_regions:
-            if function_region.intersects(function_area):
-                function_areas.append(function_area)
+    def find_test_name(view, region, selected):
+        print(view.substr(region))
+        if not region.contains(selected):
+            return None
 
-    for region in view.sel():
-        for i, area in enumerate(function_areas):
-            if not area.a <= region.a <= area.b:
-                continue
+        pattern = compile(r"^(describe|test|it)\s*\((['\"])([^'\"]*)\2")
+        matched = pattern.search(view.substr(region))
+        test_name = matched and matched.group(3)
+        return test_name
 
-            if i not in function_regions and not area.intersects(function_regions[i]):
-                continue
+    selected = view.sel()[0]
+    function_regions = view.find_by_selector('meta.function-call meta.function-call')
+    for function_region in function_regions:
+        test_name = find_test_name(view, function_region, selected)
+        if test_name:
+            return test_name
 
-            word = view.substr(function_regions[i])
-            if is_valid_php_identifier(word):
-                method_names.append(word)
-            break
-
-    # BC: < 3114
-    if not method_names:  # pragma: no cover
-        for region in view.sel():
-            word_region = view.word(region)
-            word = view.substr(word_region)
-            if not is_valid_php_identifier(word):
-                return []
-
-            scope_score = view.score_selector(word_region.begin(), 'entity.name.function.php')
-            if scope_score > 0:
-                method_names.append(word)
-            else:
-                return []
-
-    ignore_methods = ['setup', 'teardown']
-
-    return [m for m in method_names if m.lower() not in ignore_methods]
+    function_regions = view.find_by_selector('meta.function-call')
+    selected = view.sel()[0]
+    for function_region in function_regions:
+        test_name = find_test_name(view, function_region, selected)
+        if test_name:
+            return test_name
 
 
 class Switchable:
@@ -441,21 +427,6 @@ def build_cmd_options(options, cmd):
 
     return cmd
 
-
-def build_filter_option_pattern(methods):
-    test_methods = [m[4:] for m in methods if m.startswith('test')]
-
-    if len(test_methods) == len(methods):
-        methods = test_methods
-        f = '::test'
-    else:
-        f = '::'
-
-    f += '(' + '|'.join(sorted(methods)) + ')( with data set .+)?$'
-
-    return f
-
-
 def filter_path(path):
     return os.path.expandvars(os.path.expanduser(path))
 
@@ -512,10 +483,8 @@ class Jester():
             debug_message('options %s', options)
 
             cmd = build_cmd_options(options, cmd)
-
             if file:
                 if os.path.isfile(file):
-                    file = os.path.relpath(file, working_dir)
                     cmd.append(file)
                 else:
                     raise ValueError('test file \'%s\' not found' % file)
@@ -595,7 +564,6 @@ class Jester():
 
     def run_last(self):
         last_test_args = get_window_setting('Jester._test_last', window=self.window)
-        print(last_test_args)
         if not last_test_args:
             return status_message('Jester: no tests were run so far')
 
@@ -619,26 +587,16 @@ class Jester():
             )
         )
 
-    def run_nearest(self, options):
+    def run_single_test(self, options):
         file = self.view.file_name()
         if not self.is_test_file(file):
             return status_message('Jester: not a test file')
 
-        if has_test_case(self.view):
-            if 'filter' not in options:
-                selected_test_methods = find_selected_test_methods(self.view)
-                if selected_test_methods:
-                    options['filter'] = build_filter_option_pattern(selected_test_methods)
+        test_name = find_test_name_in_selection(self.view)
+        if test_name:
+            options['t'] = test_name
 
-            self.run(file=file, options=options)
-        else:
-            find_switchable(
-                self.view,
-                on_select=lambda switchable: self.run(
-                    file=switchable.file,
-                    options=options
-                )
-            )
+        self.run(file=file, options=options)
 
     def show_results(self):
         self.window.run_command('show_panel', {'panel': 'output.exec'})
@@ -739,10 +697,10 @@ class JesterTestLastCommand(sublime_plugin.WindowCommand):
         Jester(self.window).run_last()
 
 
-class JesterTestNearestCommand(sublime_plugin.WindowCommand):
+class JesterTestSingleTestCommand(sublime_plugin.WindowCommand):
 
     def run(self, **kwargs):
-        Jester(self.window).run_nearest(options=kwargs)
+        Jester(self.window).run_single_test(options=kwargs)
 
 
 class JesterTestResultsCommand(sublime_plugin.WindowCommand):
