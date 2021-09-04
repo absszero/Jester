@@ -18,7 +18,7 @@ class ViewTestCase(TestCase):
 
     def setUp(self):
         self.view = active_window().create_output_panel(
-            'phpunit_test_view',
+            'jester_test_view',
             unlisted=True
         )
         self.view.set_scratch(True)
@@ -29,11 +29,11 @@ class ViewTestCase(TestCase):
         self.view.settings().set('smart_indent', True)
         self.view.settings().set('tab_size', 4)
         self.view.settings().set('translate_tabs_to_spaces', True)
-        self.view.set_syntax_file(find_resources('PHP.sublime-syntax')[0])
+        self.view.set_syntax_file(find_resources('JavaScript.sublime-syntax')[0])
 
     def tearDown(self):
         if self.view:
             self.view.close()
 
     def fixture(self, text):
-        self.view.run_command('phpunit_test_setup_fixture', {'text': text})
+        self.view.run_command('jester_setup_fixture', {'text': text})
