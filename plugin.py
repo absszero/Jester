@@ -122,49 +122,6 @@ def find_working_directory(file_name, folders):
         return os.path.dirname(configuration_file)
 
 
-def is_valid_php_identifier(string):
-    return re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', string)
-
-
-def has_test_case(view):
-    """Return True if the view contains a valid Jester test case."""
-    for php_class in find_php_classes(view):
-        if php_class[-4:] == 'Test':
-            return True
-    return False
-
-
-def find_php_classes(view, with_namespace=False):
-    """Return list of class names defined in the view."""
-    classes = []
-
-    namespace = None
-    # for namespace_region in view.find_by_selector('entity.name.function'):
-    for namespace_region in view.find_by_selector('meta.function-call'):
-        namespace = view.substr(namespace_region)
-        print(namespace)
-
-    for class_as_region in view.find_by_selector('source.php entity.name.class - meta.use'):
-        class_as_string = view.substr(class_as_region)
-        if is_valid_php_identifier(class_as_string):
-            if with_namespace:
-                classes.append({
-                    'namespace': namespace,
-                    'class': class_as_string
-                })
-            else:
-                classes.append(class_as_string)
-
-    # BC: < 3114
-    if not classes:  # pragma: no cover
-        for class_as_region in view.find_by_selector('source.php entity.name.type.class - meta.use'):
-            class_as_string = view.substr(class_as_region)
-            if is_valid_php_identifier(class_as_string):
-                classes.append(class_as_string)
-
-    return classes
-
-
 def find_test_name_in_selection(view):
     """
     Return a list of selected test method names.
@@ -245,199 +202,6 @@ def get_color_scheme(color_scheme):
               ' scheme with Jester test results colors: {}'.format(str(e)))
 
     return color_scheme
-
-
-class Switchable:
-
-    def __init__(self, location):
-        self.location = location
-        self.file = location[0]
-
-    def file_encoded_position(self, view):
-        window = view.window()
-
-        file = self.location[0]
-        row = self.location[2][0]
-        col = self.location[2][1]
-
-        # If the file we're switching to is already open,
-        # then by default don't goto encoded position.
-        for v in window.views():
-            if v.file_name() == self.location[0]:
-                row = None
-                col = None
-
-        # If cursor is on a symbol like a class method,
-        # then try find the relating test method or vice-versa,
-        # and use that as the encoded position to jump to.
-        symbol = view.substr(view.word(view.sel()[0].b))
-        if symbol:
-            if symbol[:4] == 'test':
-                symbol = symbol[4:]
-                symbol = symbol[0].lower() + symbol[1:]
-            else:
-                symbol = 'test' + symbol[0].upper() + symbol[1:]
-
-            locations = window.lookup_symbol_in_open_files(symbol)
-            if locations:
-                for location in locations:
-                    if location[0] == self.location[0]:
-                        row = location[2][0]
-                        col = location[2][1]
-                        break
-
-        encoded_postion = ''
-        if row:
-            encoded_postion += ':' + str(row)
-        if col:
-            encoded_postion += ':' + str(col)
-
-        return file + encoded_postion
-
-
-def refine_switchable_locations(locations, file):
-    debug_message('refine location')
-    if not file:
-        return locations, False
-
-    debug_message('file=%s', file)
-    debug_message('locations=%s', locations)
-
-    files = []
-    if file.endswith('Test.php'):
-        file_is_test_case = True
-        file = file.replace('Test.php', '.php')
-        files.append(re.sub('(\\/)?[tT]ests\\/([uU]nit\\/)?', '/', file))
-        files.append(re.sub('(\\/)?[tT]ests\\/', '/src/', file))
-    else:
-        file_is_test_case = False
-        file = file.replace('.php', 'Test.php')
-        files.append(file)
-        files.append(re.sub('(\\/)?src\\/', '/', file))
-        files.append(re.sub('(\\/)?src\\/', '/test/', file))
-
-    debug_message('files=%s', files)
-
-    if len(locations) > 1:
-        common_prefix = os.path.commonprefix([l[0] for l in locations])
-        if common_prefix != '/':
-            files = [file.replace(common_prefix, '') for file in files]
-
-    for location in locations:
-        loc_file = location[0]
-        if not file_is_test_case:
-            loc_file = re.sub('\\/[tT]ests\\/([uU]nit\\/)?', '/', loc_file)
-
-        for file in files:
-            if loc_file.endswith(file):
-                return [location], True
-
-    return locations, False
-
-
-def find_switchable(view, on_select=None):
-    # Args:
-    #   view (View)
-    #   on_select (callable)
-    #
-    # Returns:
-    #   void
-    window = view.window()
-
-    if on_select is None:
-        raise ValueError('a callable is required')
-
-    file = view.file_name()
-    debug_message('file=%s', file)
-
-    classes = find_php_classes(view, with_namespace=True)
-    if len(classes) == 0:
-        return message('could not find a test case or class under test for %s', file)
-
-    debug_message('file contains %s class %s', len(classes), classes)
-
-    locations = []  # type: list
-    for _class in classes:
-        class_name = _class['class']
-
-        if class_name[-4:] == 'Test':
-            symbol = class_name[:-4]
-        else:
-            symbol = class_name + 'Test'
-
-        symbol_locations = window.symbol_locations(symbol)
-        print(symbol_locations)
-        locations += symbol_locations
-
-    debug_message('class has %s location %s', len(locations), locations)
-
-    return
-
-    def unique_locations(locations):
-        locs = []
-        seen = set()  # type: set
-        for location in locations:
-            if location[0] not in seen:
-                seen.add(location[0])
-                locs.append(location)
-
-        return locs
-
-    locations = unique_locations(locations)
-
-    if len(locations) == 0:
-        if has_test_case(view):
-            return message('could not find class under test for %s', file)
-        else:
-            return message('could not find test case for %s', file)
-
-    def _on_select(index):
-        if index == -1:
-            return
-
-        switchable = Switchable(locations[index])
-
-        if on_select is not None:
-            on_select(switchable)
-
-    locations, is_exact = refine_switchable_locations(locations=locations, file=file)
-
-    debug_message('is_exact=%s', is_exact)
-    debug_message('locations(%s)=%s', len(locations), locations)
-
-    if is_exact and len(locations) == 1:
-        return
-        return _on_select(0)
-
-    window.show_quick_panel(['{}:{}'.format(l[1], l[2][0]) for l in locations], _on_select)
-
-
-def put_views_side_by_side(view_a, view_b):
-    if view_a == view_b:
-        return
-
-    window = view_a.window()
-
-    if window.num_groups() == 1:
-        window.run_command('set_layout', {
-            "cols": [0.0, 0.5, 1.0],
-            "rows": [0.0, 1.0],
-            "cells": [[0, 0, 1, 1], [1, 0, 2, 1]]
-        })
-
-    view_a_index = window.get_view_index(view_a)
-    view_b_index = window.get_view_index(view_b)
-
-    if window.num_groups() <= 2 and view_a_index[0] == view_b_index[0]:
-
-        if view_a_index[0] == 0:
-            window.set_view_index(view_b, 1, 0)
-        else:
-            window.set_view_index(view_b, 0, 0)
-
-        # Ensure focus is not lost from either view.
-        window.focus_view(view_a)
-        window.focus_view(view_b)
 
 
 def exec_file_regex():
@@ -550,66 +314,44 @@ class Jester():
         debug_message('env %s', env)
         debug_message('cmd %s', cmd)
 
-        if self.view.settings().get('Jester.save_all_on_run'):
-            # Write out every buffer in active
-            # window that has changes and is
-            # a real file on disk.
-            for view in self.window.views():
-                if view.is_dirty() and view.file_name():
-                    view.run_command('save')
-
         set_window_setting('Jester._test_last', {
             'working_dir': working_dir,
             'file': file,
             'options': options
         }, window=self.window)
 
-        if self.view.settings().get('Jester.strategy') == 'iterm':
-            osx_iterm_script = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), 'bin', 'osx_iterm')
+        self.window.run_command('exec', {
+            'env': env,
+            'cmd': cmd,
+            'file_regex': exec_file_regex(),
+            'quiet': not is_debug(self.view),
+            'shell': False,
+            'syntax': 'Packages/{}/res/text-ui-result.sublime-syntax'.format(__name__.split('.')[0]),
+            'word_wrap': False,
+            'working_dir': working_dir
+        })
 
-            cmd = [osx_iterm_script] + cmd
+        panel = self.window.create_output_panel('exec')
 
-            self.window.run_command('exec', {
-                'env': env,
-                'cmd': cmd,
-                'quiet': not is_debug(self.view),
-                'shell': False,
-                'working_dir': working_dir
-            })
-        else:
-            self.window.run_command('exec', {
-                'env': env,
-                'cmd': cmd,
-                'file_regex': exec_file_regex(),
-                'quiet': not is_debug(self.view),
-                'shell': False,
-                'syntax': 'Packages/{}/res/text-ui-result.sublime-syntax'.format(__name__.split('.')[0]),
-                'word_wrap': False,
-                'working_dir': working_dir
-            })
+        header_text = []
+        if env:
+            header_text.append("env: {}\n".format(env))
 
-            panel = self.window.create_output_panel('exec')
+        header_text.append("{}\n\n".format(' '.join(cmd)))
 
-            header_text = []
-            if env:
-                header_text.append("env: {}\n".format(env))
+        panel.run_command('insert', {'characters': ''.join(header_text)})
 
-            header_text.append("{}\n\n".format(' '.join(cmd)))
+        panel_settings = panel.settings()
+        panel_settings.set('rulers', [])
 
-            panel.run_command('insert', {'characters': ''.join(header_text)})
+        if self.view.settings().has('Jester.text_ui_result_font_size'):
+            panel_settings.set(
+                'font_size',
+                self.view.settings().get('Jester.text_ui_result_font_size')
+            )
 
-            panel_settings = panel.settings()
-            panel_settings.set('rulers', [])
-
-            if self.view.settings().has('Jester.text_ui_result_font_size'):
-                panel_settings.set(
-                    'font_size',
-                    self.view.settings().get('Jester.text_ui_result_font_size')
-                )
-
-            color_scheme = get_color_scheme(self.view.settings().get('color_scheme'))
-            panel_settings.set('color_scheme', color_scheme)
+        color_scheme = get_color_scheme(self.view.settings().get('color_scheme'))
+        panel_settings.set('color_scheme', color_scheme)
 
     def run_last(self):
         last_test_args = get_window_setting('Jester._test_last', window=self.window)
@@ -647,55 +389,6 @@ class Jester():
 
         self.run(file=file, options=options)
 
-    def show_results(self):
-        self.window.run_command('show_panel', {'panel': 'output.exec'})
-
-    def cancel(self):
-        self.window.run_command('exec', {'kill': True})
-
-    def open_coverage_report(self):
-        working_dir = find_working_directory(self.view.file_name(), self.window.folders())
-        if not working_dir:
-            return status_message('Jester: could not find a Jester working directory')
-
-        coverage_html_index_html_file = os.path.join(working_dir, 'build/coverage/index.html')
-        if not os.path.exists(coverage_html_index_html_file):
-            return status_message('Jester: could not find Jester HTML code coverage %s' % coverage_html_index_html_file)  # noqa: E501
-
-        import webbrowser
-        webbrowser.open_new_tab('file://' + coverage_html_index_html_file)
-
-    def switch(self):
-        def _on_switchable(switchable):
-            self.window.open_file(switchable.file_encoded_position(self.view), ENCODED_POSITION)
-            put_views_side_by_side(self.view, self.window.active_view())
-
-        find_switchable(self.view, on_select=_on_switchable)
-
-    def visit(self):
-        test_last = get_window_setting('Jester._test_last', window=self.window)
-        if test_last:
-            if 'file' in test_last and 'working_dir' in test_last:
-                if test_last['file']:
-                    file = os.path.join(test_last['working_dir'], test_last['file'])
-                    if os.path.isfile(file):
-                        return self.window.open_file(file)
-
-        return status_message('Jester: no tests were run so far')
-
-    def toggle_option(self, option, value=None):
-        options = get_window_setting('Jester.options', default={}, window=self.window)
-
-        if value is None:
-            options[option] = not bool(options[option]) if option in options else True
-        else:
-            if option in options and options[option] == value:
-                del options[option]
-            else:
-                options[option] = value
-
-        set_window_setting('Jester.options', options, window=self.window)
-
     def filter_options(self, options):
         if options is None:
             options = {}
@@ -726,12 +419,6 @@ class Jester():
         return _get_jest_executable(working_dir)
 
 
-class JesterTestSuiteCommand(sublime_plugin.WindowCommand):
-
-    def run(self, **kwargs):
-        Jester(self.window).run(options=kwargs)
-
-
 class JesterTestFileCommand(sublime_plugin.WindowCommand):
 
     def run(self, **kwargs):
@@ -748,56 +435,3 @@ class JesterTestSingleTestCommand(sublime_plugin.WindowCommand):
 
     def run(self, **kwargs):
         Jester(self.window).run_single_test(options=kwargs)
-
-
-class JesterTestResultsCommand(sublime_plugin.WindowCommand):
-
-    def run(self):
-        Jester(self.window).show_results()
-
-
-class JesterTestCancelCommand(sublime_plugin.WindowCommand):
-
-    def run(self):
-        Jester(self.window).cancel()
-
-
-class JesterTestVisitCommand(sublime_plugin.WindowCommand):
-
-    def run(self):
-        Jester(self.window).visit()
-
-
-class JesterTestSwitchCommand(sublime_plugin.WindowCommand):
-
-    def run(self):
-        Jester(self.window).switch()
-
-
-class JesterToggleOptionCommand(sublime_plugin.WindowCommand):
-
-    def run(self, option, value=None):
-        Jester(self.window).toggle_option(option, value)
-
-
-class JesterTestCoverageCommand(sublime_plugin.WindowCommand):
-
-    def run(self):
-        Jester(self.window).open_coverage_report()
-
-
-class JesterEvents(sublime_plugin.EventListener):
-
-    def on_post_save(self, view):
-        file_name = view.file_name()
-        if not file_name:
-            return
-
-        if not file_name.endswith('.php'):
-            return
-
-        on_post_save_events = view.settings().get('Jester.on_post_save')
-
-        if 'run_test_file' in on_post_save_events:
-            Jester(view.window()).run_file()
-
