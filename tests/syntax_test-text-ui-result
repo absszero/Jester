@@ -1,0 +1,38 @@
+# SYNTAX TEST "Packages/Jester/res/text-ui-result.sublime-syntax"
+
+PASS resources/js/example.spec.js
+#^^^ region.greenish test.head.jest-result
+
+FAIL  resources/js/example.spec.js
+#^^^ region.redish test.head.jest-result
+
+RUNS  resources/js/example.spec.js
+#^^^ region.yellowish test.head.jest-result
+
+  ✕ aaaa (3 ms)
+# ^ markup.deleted test.case.result.jest-result
+#  ^^^^^^^^^^^^ comment test.case.result.jest-result
+  ✓ bbbb
+# ^ markup.inserted test.case.result.jest-result
+  yourModule
+    ✓ cccc (1 ms)
+  myModule
+    ✓ dddd
+
+
+      1 | test('aaaa', () => {
+#                         ^^ markup.changed
+    > 2 |     expect(1 + 1).toBe(3);
+#   ^ markup.deleted test.case.breakpoint.jest-result
+        |                   ^
+#                           ^ markup.deleted test.case.breakpoint.jest-result
+      3 | });
+
+      at Object.<anonymous> (resources/js/example.spec.js:2:19)
+#     ^^^^^^^^^^^^^^^^^^^^^^^ comment test.case.trace.jest-result
+                                                         ^^^^^ comment test.case.trace.location.jest-result
+
+Tests:       1 failed, 3 passed, 4 total
+^^^^^^ test.case.summary.jest-result
+             ^^^^^^^^ markup.deleted test.case.summary.counts.jest-result
+                       ^^^^^^^^ markup.inserted test.case.summary.counts.jest-result

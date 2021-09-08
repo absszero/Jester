@@ -1,0 +1,17 @@
+// SYNTAX TEST "Packages/Jester/res/text-ui-result.sublime-syntax"
+
+/Volumes/data/develop/www/project-template/site/node_modules/.bin/jest /Volumes/data/develop/www/project-template/site/resources/js/example.spec.js
+
+PASS resources/js/example.spec.js
+  ✓ aaaa (1 ms)
+  ✓ bbbb
+  yourModule
+    ✓ cccc
+  myModule
+    ✓ dddd
+
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        0.757 s, estimated 1 s
+Ran all test suites matching /\/Volumes\/data\/develop\/www\/project-template\/site\/resources\/js\/example.spec.js/i.
