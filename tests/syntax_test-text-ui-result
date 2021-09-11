@@ -12,6 +12,8 @@ RUNS  resources/js/example.spec.js
   ✕ aaaa (3 ms)
 # ^ markup.deleted test.case.result.jest-result
 #  ^^^^^^^^^^^^ comment test.case.result.jest-result
+  ○ skipped aaaa
+# ^ markup.changed
   ✓ bbbb
 # ^ markup.inserted test.case.result.jest-result
   yourModule
@@ -32,7 +34,8 @@ RUNS  resources/js/example.spec.js
 #     ^^^^^^^^^^^^^^^^^^^^^^^ comment test.case.trace.jest-result
                                                          ^^^^^ comment test.case.trace.location.jest-result
 
-Tests:       1 failed, 3 passed, 4 total
+Tests:       3 skipped, 1 failed, 3 passed, 4 total
 ^^^^^^ test.case.summary.jest-result
-             ^^^^^^^^ markup.deleted test.case.summary.counts.jest-result
-                       ^^^^^^^^ markup.inserted test.case.summary.counts.jest-result
+             ^^^^^^^^ markup.changed test.case.summary.counts.jest-result
+                        ^^^^^^^^ markup.deleted test.case.summary.counts.jest-result
+                                  ^^^^^^^^ markup.inserted test.case.summary.counts.jest-result

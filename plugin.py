@@ -322,7 +322,7 @@ class Jester():
             )
         )
 
-    def run_single_test(self, options):
+    def run_block(self, options):
         file = self.view.file_name()
         if not self.is_test_file(file):
             return status_message('Jester: not a test file')
@@ -363,6 +363,12 @@ class Jester():
         return _get_jest_executable(working_dir)
 
 
+class JesterTestSuiteCommand(sublime_plugin.WindowCommand):
+
+    def run(self, **kwargs):
+        Jester(self.window).run(options=kwargs)
+
+
 class JesterTestFileCommand(sublime_plugin.WindowCommand):
 
     def run(self, **kwargs):
@@ -375,7 +381,7 @@ class JesterTestLastCommand(sublime_plugin.WindowCommand):
         Jester(self.window).run_last()
 
 
-class JesterTestSingleTestCommand(sublime_plugin.WindowCommand):
+class JesterTestBlockCommand(sublime_plugin.WindowCommand):
 
     def run(self, **kwargs):
-        Jester(self.window).run_single_test(options=kwargs)
+        Jester(self.window).run_block(options=kwargs)

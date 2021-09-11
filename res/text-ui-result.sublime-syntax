@@ -24,6 +24,10 @@ contexts:
       scope: markup.deleted test.case.result.jest-result
       push: test_case
 
+    - match: ○
+      scope: markup.changed test.case.result.jest-result
+      push: test_case
+
     - match: \s+\>\s
       scope: markup.deleted test.case.breakpoint.jest-result
 
@@ -61,3 +65,5 @@ contexts:
       scope: markup.deleted test.case.summary.counts.jest-result
     - match: \d passed
       scope: markup.inserted test.case.summary.counts.jest-result
+    - match: \d skipped
+      scope: markup.changed test.case.summary.counts.jest-result

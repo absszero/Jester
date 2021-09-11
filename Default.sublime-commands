@@ -1,7 +1,8 @@
 [
+    { "caption": "Jester: Test Sute", "command": "jester_test_suite" },
     { "caption": "Jester: Test File", "command": "jester_test_file" },
     { "caption": "Jester: Test Last", "command": "jester_test_last" },
-    { "caption": "Jester: Test Single Test", "command": "jester_test_single_test" },
+    { "caption": "Jester: Test Block", "command": "jester_test_block" },
     { "caption": "Preferences: Jester Settings – Default", "command": "open_file", "args": { "file": "${packages}/sublime-jest/Preferences.sublime-settings" } },
     { "caption": "Preferences: Jester Settings – User", "command": "open_file", "args": { "file": "${packages}/User/Preferences.sublime-settings" } }
 ]
