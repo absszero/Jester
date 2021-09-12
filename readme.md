@@ -61,3 +61,10 @@ You can instruct the test runner to use a custom Jest executable. If the package
 ```
 "jester.executable": "~./node_modules/.bin/jest"
 ```
+
+
+
+## Credits
+
+Based initially on, and inspired by, [gerardroche/sublime-phpunit](https://github.com/gerardroche/sublime-phpunit/).
+

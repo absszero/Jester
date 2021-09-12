@@ -14,8 +14,6 @@ jobs:
       options: --cap-add=NET_ADMIN
     steps:
       - uses: actions/checkout@v1
-        with:
-          path: Jester
       - run: sh -e /etc/init.d/xvfb start
       - run: curl -OL https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/github.sh
       - run: |
