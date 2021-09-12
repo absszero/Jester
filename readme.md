@@ -1,5 +1,10 @@
 # Jester
 
+[![Github Action](https://github.com/absszero/sublime-jester/workflows/build/badge.svg)](https://github.com/absszero/sublime-jester/actions)
+
+------------
+
+
 A Jest test runner
 
 ![example](example.png)
