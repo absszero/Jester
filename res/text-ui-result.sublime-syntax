@@ -1,0 +1,69 @@
+%YAML 1.2
+---
+# https://www.sublimetext.com/docs/syntax.html
+# See https://github.com/facebook/jest/blob/master/packages/jest-reporters/src/SummaryReporter.ts
+name: Jest Text UI Result
+scope: text.jest-result
+hidden: true
+contexts:
+  main:
+    - match: ^\s?PASS
+      scope: region.greenish test.head.jest-result
+
+    - match: ^\s?FAIL
+      scope: region.redish test.head.jest-result
+
+    - match: ^\s?RUNS
+      scope: region.yellowish test.head.jest-result
+
+    - match: ✓
+      scope: markup.inserted test.case.result.jest-result
+      push: test_case
+
+    - match: ✕
+      scope: markup.deleted test.case.result.jest-result
+      push: test_case
+
+    - match: ○
+      scope: markup.changed test.case.result.jest-result
+      push: test_case
+
+    - match: \s+\>\s
+      scope: markup.deleted test.case.breakpoint.jest-result
+
+    - match: \^
+      scope: markup.deleted test.case.breakpoint.jest-result
+
+    - match: =>
+      scope: markup.changed
+
+    - match: at [^(]+\(
+      scope: comment test.case.trace.jest-result
+      push: trace
+
+    - match: ^[\w\s]+:\s
+      scope: test.case.summary.jest-result
+      push: summary
+
+  test_case:
+    - match: $
+      pop: true
+    - match: "[^$]+"
+      scope: comment test.case.result.jest-result
+
+  trace:
+    - match: \:\d+:\d+
+      scope: comment test.case.trace.location.jest-result
+    - match: \)
+      scope: comment
+      pop: true
+
+  summary:
+    - match: $
+      pop: true
+    - match: \d failed
+      scope: markup.deleted test.case.summary.counts.jest-result
+    - match: \d passed
+      scope: markup.inserted test.case.summary.counts.jest-result
+    - match: \d skipped
+      scope: markup.changed test.case.summary.counts.jest-result
