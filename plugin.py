@@ -1,5 +1,6 @@
 import os
 import shutil
+import sublime
 import sublime_plugin
 
 from sublime import active_window
@@ -7,17 +8,25 @@ from sublime import platform
 from sublime import status_message
 from re import compile
 
+settings = None
 
-_DEBUG = bool(os.getenv('SUBLIME_JESTER_DEBUG'))
 
-if _DEBUG:
-    def debug_message(msg, *args):
-        if args:
-            msg = msg % args
-        print('Jester: ' + msg)
-else:  # pragma: no cover
-    def debug_message(msg, *args):
-        pass
+def get_settings(key: str, default=None):
+    global settings
+
+    if settings is None:
+        settings = sublime.load_settings('Jester.sublime-settings')
+
+    return settings.get(key, default)
+
+
+def debug_message(msg, *args):
+    if not get_settings('debug'):
+        return
+
+    if args:
+        msg = msg % argson_post_save
+    print('Jester: ' + msg)
 
 
 def message(msg, *args):
@@ -28,16 +37,6 @@ def message(msg, *args):
 
     print(msg)
     status_message(msg)
-
-
-def is_debug(view=None):
-    if view:
-        Jester_debug = view.settings().get('Jester.debug')
-        return Jester_debug or (
-            Jester_debug is not False and view.settings().get('debug')
-        )
-    else:
-        return _DEBUG
 
 
 def get_window_setting(key, default=None, window=None):
@@ -271,7 +270,7 @@ class Jester():
             'env': env,
             'cmd': cmd,
             'file_regex': exec_file_regex(),
-            'quiet': not is_debug(self.view),
+            'quiet': not get_settings('debug'),
             'shell': False,
             'syntax': 'Packages/{}/res/text-ui-result.sublime-syntax'.format(__name__.split('.')[0]),
             'word_wrap': False,
@@ -354,10 +353,10 @@ class Jester():
         return options
 
     def get_jest_executable(self, working_dir):
-        executable = self.view.settings().get('jester.executable')
+        executable = get_settings('jest_execution')
         if executable:
             executable = filter_path(executable)
-            debug_message('jester.executable = %s', executable)
+            debug_message('jester.jest_execution = %s', executable)
             return executable
 
         return _get_jest_executable(working_dir)

@@ -27,30 +27,25 @@
                 [
                     {
                         "caption": "Jester",
+                        "id": "jester-settings",
                         "children":
                         [
                             {
-                                "caption": "Settings – Default",
-                                "command": "open_file",
-                                "args": {
-                                    "file": "${packages}/sublime-jest/Preferences.sublime-settings"
+                                "caption": "Settings",
+                                "command": "edit_settings", "args":
+                                {
+                                    "base_file": "${packages}/sublime_jester/jester.sublime-settings",
+                                    "default": "// Jester Settings - User\n{\n\t$0\n}\n"
                                 }
                             },
-                            {
-                                "caption": "Settings – User",
-                                "command": "open_file",
-                                "args": {
-                                    "file": "${packages}/User/Preferences.sublime-settings"
-                                }
-                            },
-                            { "caption": "-" },
                             {
                                 "caption": "Key Bindings - User",
-                                "command": "edit_settings",
-                                "args": {
-                                    "file": "${packages}/User/Default (${platform}).sublime-keymap"
-                                  }
-                              }
+                                "command": "edit_settings", "args":
+                                {
+                                    "base_file": "${packages}/sublime-jest/keymaps/Default ($platform).sublime-keymap",
+                                    "default": "${packages}/User/Default ($platform).sublime-keymap"
+                                }
+                            }
                         ]
                     }
                 ]
