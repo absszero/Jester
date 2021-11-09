@@ -1,6 +1,14 @@
 {
+    // Show debug information
+    "debug": false,
+
     // The jest execution is used when running tests. The default is looking for
-    // a jest execution found on the node_modelus/.bin/jest in the working directories.
+    // the jest execution found on the node_modelus/.bin in the working directories.
     // "jest_execution": "/usr/local/bin/jest",
     // "jest_execution": "%USERPROFILE%\AppData\Roaming\npm\jest.cmd",
+
+    // Jest CLI Options.
+    // https://jestjs.io/docs/cli
+    // e.g. `{"json": true, "outputFile": "filename.out"}`
+    "jest_options": {}
 }

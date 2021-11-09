@@ -54,13 +54,30 @@ Add your preferred key bindings.
 
 Add your configurations.
 
-### jester.executable
-
-You can instruct the test runner to use a custom Jest executable. If the package does not auto discover it.
+### debug
 
 ```
-"jester.executable": "~./node_modules/.bin/jest"
+"debug": true
 ```
+
+
+
+### jest_execution
+
+You can instruct the test runner to use a custom Jest execution. If the package does not auto discover it.
+
+```
+"jest_execution": "%USERPROFILE%\AppData\Roaming\npm\jest.cmd"
+```
+
+### jest_options
+
+Jest CLI options. https://jestjs.io/docs/cli
+
+```
+"jest_options": {"json": true, "outputFile": "filename.out"}
+```
+
 
 
 

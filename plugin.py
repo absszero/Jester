@@ -25,7 +25,7 @@ def debug_message(msg, *args):
         return
 
     if args:
-        msg = msg % argson_post_save
+        msg = msg % args
     print('Jester: ' + msg)
 
 
@@ -343,7 +343,7 @@ class Jester():
                 if k not in options:
                     options[k] = v
 
-        view_options = self.view.settings().get('jester.options')
+        view_options = get_settings('jest_options')
         debug_message('view options %s', view_options)
         if view_options:
             for k, v in view_options.items():

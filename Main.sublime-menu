@@ -34,7 +34,7 @@
                                 "caption": "Settings",
                                 "command": "edit_settings", "args":
                                 {
-                                    "base_file": "${packages}/sublime_jester/jester.sublime-settings",
+                                    "base_file": "${packages}/sublime_jester/Jester.sublime-settings",
                                     "default": "// Jester Settings - User\n{\n\t$0\n}\n"
                                 }
                             },
