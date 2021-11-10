@@ -52,7 +52,7 @@ Add your preferred key bindings.
 
 `Tools`  > `Command Palette`, then select `Preferences: Jester Settings`.
 
-```json
+```javascript
     // Show debug information
     "debug": false,
 
