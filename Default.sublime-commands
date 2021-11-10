@@ -1,8 +1,28 @@
 [
-    { "caption": "Jester: Test Sute", "command": "jester_test_suite" },
-    { "caption": "Jester: Test File", "command": "jester_test_file" },
-    { "caption": "Jester: Test Block", "command": "jester_test_block" },
-    { "caption": "Jester: Test Last", "command": "jester_test_last" },
-    { "caption": "Preferences: Jester Settings – Default", "command": "open_file", "args": { "file": "${packages}/sublime-jest/Preferences.sublime-settings" } },
-    { "caption": "Preferences: Jester Settings – User", "command": "open_file", "args": { "file": "${packages}/User/Preferences.sublime-settings" } }
+    {
+        "caption": "Jester: Test Sute",
+        "command": "jester_test_suite"
+    },
+    {
+        "caption": "Jester: Test File",
+        "command": "jester_test_file"
+    },
+    {
+        "caption": "Jester: Test Block",
+        "command": "jester_test_block"
+    },
+    {
+        "caption": "Jester: Test Last",
+        "command": "jester_test_last"
+    },
+    {
+        "caption": "Preferences: Jester Settings",
+        "command": "edit_settings",
+        "args": { "base_file": "${packages}/sublime_jester/Jester.sublime-settings" }
+    },
+    {
+        "caption": "Preferences: Jester Key Bindings",
+        "command": "edit_settings",
+        "args": { "base_file": "${packages}/sublime_jester/Default.sublime-keymap" }
+    }
 ]

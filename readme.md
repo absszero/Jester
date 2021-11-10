@@ -33,7 +33,7 @@ A Jest test runner
 
 ## Key Bindings
 
-`Tools`  > `Command Palette`, then select `Preferences: Key Bindings`.
+`Tools`  > `Command Palette`, then select `Preferences: Jester Key Bindings`.
 
 Add your preferred key bindings.
 
@@ -49,6 +49,8 @@ Add your preferred key bindings.
 
 
 ## Configuration
+
+`Tools`  > `Command Palette`, then select `Preferences: Jester Settings`.
 
 ```json
     // Show debug information

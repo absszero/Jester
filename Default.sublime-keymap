@@ -1,0 +1,25 @@
+[
+    // Jester: Test Sute
+    {
+        "keys": ["ctrl+shift+s"],
+        "command": "jester_test_suite"
+    },
+
+    // Jester: Test File
+    {
+        "keys": ["ctrl+shift+f"],
+        "command": "jester_test_file"
+    },
+
+    // Jester: Test Block
+    {
+        "keys": ["ctrl+shift+b"],
+        "command": "jester_test_block"
+    },
+
+    // Jester: Test Last
+    {
+        "keys": ["ctrl+shift+l"],
+        "command": "jester_test_last"
+    }
+]

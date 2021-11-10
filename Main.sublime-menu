@@ -14,42 +14,23 @@
         ]
     },
     {
-        "caption": "Preferences",
-        "mnemonic": "n",
         "id": "preferences",
-        "children":
-        [
-            {
-                "caption": "Package Settings",
-                "mnemonic": "P",
-                "id": "package-settings",
-                "children":
-                [
-                    {
-                        "caption": "Jester",
-                        "id": "jester-settings",
-                        "children":
-                        [
-                            {
-                                "caption": "Settings",
-                                "command": "edit_settings", "args":
-                                {
-                                    "base_file": "${packages}/sublime_jester/Jester.sublime-settings",
-                                    "default": "// Jester Settings - User\n{\n\t$0\n}\n"
-                                }
-                            },
-                            {
-                                "caption": "Key Bindings - User",
-                                "command": "edit_settings", "args":
-                                {
-                                    "base_file": "${packages}/sublime-jest/keymaps/Default ($platform).sublime-keymap",
-                                    "default": "${packages}/User/Default ($platform).sublime-keymap"
-                                }
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }
+        "children": [{
+            "caption": "Package Settings",
+            "mnemonic": "P",
+            "id": "package-settings",
+            "children": [{
+                "caption": "Jester",
+                "children": [{
+                    "command": "edit_settings",
+                    "args": { "base_file": "${packages}/sublime_jester/Jester.sublime-settings" },
+                    "caption": "Settings"
+                }, {
+                    "command": "edit_settings",
+                    "args": { "base_file": "${packages}/sublime_jester/Default.sublime-keymap" },
+                    "caption": "Key Bindings"
+                }]
+            }]
+        }]
+}
 ]
