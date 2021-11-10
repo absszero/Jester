@@ -50,32 +50,19 @@ Add your preferred key bindings.
 
 ## Configuration
 
-`Tools`  > `Command Palette`, then select `Preferences: Settings`.
+```json
+    // Show debug information
+    "debug": false,
 
-Add your configurations.
+    // The jest execution is used when running tests. The default is looking for
+    // the jest execution found on the node_modelus/.bin in the working directories.
+    // "jest_execution": "/usr/local/bin/jest",
+    // "jest_execution": "%USERPROFILE%\AppData\Roaming\npm\jest.cmd",
 
-### debug
-
-```
-"debug": true
-```
-
-
-
-### jest_execution
-
-You can instruct the test runner to use a custom Jest execution. If the package does not auto discover it.
-
-```
-"jest_execution": "%USERPROFILE%\AppData\Roaming\npm\jest.cmd"
-```
-
-### jest_options
-
-Jest CLI options. https://jestjs.io/docs/cli
-
-```
-"jest_options": {"json": true, "outputFile": "filename.out"}
+    // Jest CLI Options.
+    // https://jestjs.io/docs/cli
+    // e.g. `{"json": true, "outputFile": "filename.out"}`
+    "jest_options": {}
 ```
 
 

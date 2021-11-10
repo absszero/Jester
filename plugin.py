@@ -190,12 +190,15 @@ def filter_path(path):
     return os.path.expandvars(os.path.expanduser(path))
 
 
-def _get_jest_executable(working_dir):
+def _get_jest_executable(working_dir, global_jest=None):
     locations = [
         os.path.join(working_dir, os.path.join('node_modules', '.bin', 'jest.cmd')),
         os.path.join(working_dir, os.path.join('node_modules', '.bin', 'jest')),
-        shutil.which('jest')
     ]
+
+    if global_jest:
+        locations.append(global_jest)
+
     for location in locations:
         debug_message('  found jest_location:\'%s\'', location)
         if is_file_executable(location):
@@ -359,7 +362,7 @@ class Jester():
             debug_message('jester.jest_execution = %s', executable)
             return executable
 
-        return _get_jest_executable(working_dir)
+        return _get_jest_executable(working_dir, shutil.which('jest'))
 
 
 class JesterTestSuiteCommand(sublime_plugin.WindowCommand):
