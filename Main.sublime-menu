@@ -23,11 +23,11 @@
                 "caption": "Jester",
                 "children": [{
                     "command": "edit_settings",
-                    "args": { "base_file": "${packages}/sublime_jester/Jester.sublime-settings" },
+                    "args": { "base_file": "${packages}/Jester/Jester.sublime-settings" },
                     "caption": "Settings"
                 }, {
                     "command": "edit_settings",
-                    "args": { "base_file": "${packages}/sublime_jester/Default.sublime-keymap" },
+                    "args": { "base_file": "${packages}/Jester/Default.sublime-keymap" },
                     "caption": "Key Bindings"
                 }]
             }]

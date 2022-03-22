@@ -1,0 +1,8 @@
+/* Add your preferred key bindings. Example:
+[
+    { "keys": ["ctrl+shift+s"], "command": "jester_test_suite" },
+    { "keys": ["ctrl+shift+f"], "command": "jester_test_file" },
+    { "keys": ["ctrl+shift+b"], "command": "jester_test_block" },
+    { "keys": ["ctrl+shift+l"], "command": "jester_test_last" }
+ ]
+*/

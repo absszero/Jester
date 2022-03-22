@@ -4,12 +4,9 @@
 
 ------------
 
-
 A Jest test runner
 
 ![example](example.png)
-
-
 
 ## Installation
 
