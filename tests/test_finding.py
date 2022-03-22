@@ -1,7 +1,7 @@
 import importlib
 import os
 from . import unittest
-from sublime_jester.plugin import find_jest_configuration_file
+from Jester.plugin import find_jest_configuration_file
 
 
 class TestFinding(unittest.TestCase):

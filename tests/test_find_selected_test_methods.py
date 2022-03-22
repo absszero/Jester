@@ -1,7 +1,7 @@
 from sublime import find_resources
 
 from . import unittest
-from sublime_jester.plugin import find_test_name_in_selection
+from Jester.plugin import find_test_name_in_selection
 
 
 class TestFindSelectedTestName(unittest.ViewTestCase):

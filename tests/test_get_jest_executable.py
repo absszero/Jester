@@ -3,7 +3,7 @@ import sublime
 import importlib
 
 from . import unittest
-from sublime_jester.plugin import _get_jest_executable
+from Jester.plugin import _get_jest_executable
 
 
 class TestGetJestExecutable(unittest.TestCase):
