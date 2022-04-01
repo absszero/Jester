@@ -21,7 +21,7 @@ A Jest test runner
 
 `Tools`  > `Command Palette`, and select following commands:
 
-- `Jester: Test Sute` Run the whole test suite by current actived file.
+- `Jester: Test Suite` Run the whole test suite by current actived file.
 - `Jester: Test File` Run all tests by current actived file.
 - `Jester: Test Block` Run the test block by the cursor location.
 - `Jester: Test Last` Run the last test.
