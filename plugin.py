@@ -117,7 +117,7 @@ def find_working_directory(file_name, folders):
         return os.path.dirname(configuration_file)
 
 
-def find_test_name_in_selection(view):
+def find_test_call_in_selection(view):
     """
     Return a list of selected test method names.
 
@@ -130,24 +130,75 @@ def find_test_name_in_selection(view):
         if not region.contains(selected):
             return None
 
-        pattern = compile(r"^(describe|test|it)\s*\((['\"])([^'\"]*)\2")
-        matched = pattern.search(view.substr(region))
-        test_name = matched and matched.group(3)
-        return test_name
+        source_start = max(0, region.begin() - 64)
+        source = view.substr(sublime.Region(source_start, region.end()))
+        region_start = region.begin() - source_start
+        pattern = compile(
+            r"(describe|test|it)((?:\.(?:only|skip|todo|concurrent|each|failing|sequential))*)\s*\("
+        )
+        matched = None
+        for candidate in pattern.finditer(source):
+            if candidate.start() <= region_start <= candidate.end():
+                matched = candidate
+        if not matched:
+            return None
+
+        if '.each' in matched.group(2):
+            name_pattern = compile(r"\)\s*\(\s*(['\"])([^'\"]*)\1")
+            name_match = name_pattern.search(source, matched.end())
+        else:
+            name_pattern = compile(r"\s*(['\"])([^'\"]*)\1")
+            name_match = name_pattern.search(source, matched.end())
+
+        if name_match:
+            return name_match.group(2), '.each' in matched.group(2)
+        return None
 
     selected = view.sel()[0]
     function_regions = view.find_by_selector('meta.function-call meta.function-call')
     for function_region in function_regions:
-        test_name = find_test_name(view, function_region, selected)
-        if test_name:
-            return test_name
+        test_call = find_test_name(view, function_region, selected)
+        if test_call:
+            return test_call
 
     function_regions = view.find_by_selector('meta.function-call')
     selected = view.sel()[0]
     for function_region in function_regions:
-        test_name = find_test_name(view, function_region, selected)
-        if test_name:
-            return test_name
+        test_call = find_test_name(view, function_region, selected)
+        if test_call:
+            return test_call
+
+
+def find_test_name_in_selection(view):
+    test_call = find_test_call_in_selection(view)
+    return test_call and test_call[0]
+
+
+def escape_jest_regex_literal(text):
+    regex_metacharacters = r'\^$.*+?()[]{}|'
+    return ''.join(
+        '\\' + character if character in regex_metacharacters else character
+        for character in text
+    )
+
+
+def escape_test_name_for_jest(test_name, is_each=False):
+    if not is_each:
+        return escape_jest_regex_literal(test_name)
+
+    parts = []
+    cursor = 0
+    placeholder_pattern = compile(r"%%|%(?:[sdifjoOp#])|\$[a-zA-Z_$][\w$]*")
+    for placeholder in placeholder_pattern.finditer(test_name):
+        parts.append(escape_jest_regex_literal(test_name[cursor:placeholder.start()]))
+        if placeholder.group() == '%%':
+            parts.append('%')
+        else:
+            parts.append('.*')
+        cursor = placeholder.end()
+
+    parts.append(escape_jest_regex_literal(test_name[cursor:]))
+    return ''.join(parts)
 
 
 def exec_file_regex():
@@ -329,9 +380,12 @@ class Jester():
         if not self.is_test_file(file):
             return status_message('Jester: not a test file')
 
-        test_name = find_test_name_in_selection(self.view)
-        if test_name:
-            options['t'] = test_name
+        test_call = find_test_call_in_selection(self.view)
+        if not test_call:
+            return status_message('Jester: no test found at cursor')
+
+        test_name, is_each = test_call
+        options['t'] = escape_test_name_for_jest(test_name, is_each=is_each)
 
         self.run(file=file, options=options)
 

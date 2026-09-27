@@ -1,6 +1,4 @@
 import os
-import sublime
-import importlib
 
 from . import unittest
 from Jester.plugin import _get_jest_executable
@@ -20,4 +18,3 @@ class TestGetJestExecutable(unittest.TestCase):
         actual = _get_jest_executable(unittest.fixtures_path('node_win'))
         expected = os.path.join(unittest.fixtures_path(), 'node_win', 'node_modules', '.bin', 'jest.cmd')
         self.assertEqual(actual, expected)
-
