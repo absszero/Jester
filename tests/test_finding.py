@@ -1,4 +1,3 @@
-import importlib
 import os
 from . import unittest
 from Jester.plugin import find_jest_configuration_file
